@@ -1,5 +1,7 @@
-import { Observable, interval, of, map, tap, timer, combineLatest, from } from 'rxjs';
+import {Observable, interval, of, map, tap, timer, combineLatest, from, throwError, catchError } from 'rxjs';
+import { ajax } from 'rxjs/ajax';
 
+import { XMLHttpRequest } from 'xmlhttprequest';
 export function exampleObservables() {
 
     const observable = new Observable((subscriber) => {
@@ -97,11 +99,42 @@ export async function exampleFromSource(){
         }
     }
 
-    let apiSource = from(new Promise(
-        async resolve => resolve(
-            await fetch("http://localhost:5026/api/v1/Product/all", options)
+    const apiSource = await from(
+        fetch("http://localhost:5026/api/v1/Product/all", options)
             .then(response => response.json())
-        )));
-
-    const subscriber = apiSource.subscribe(value => console.log(value));
+    );
+    const subscriber = await apiSource.subscribe(value => console.log(value));
 }
+
+export async function exampleThrowError(){
+    let errorCount = 0;
+
+    const errorWithTimestamp = throwError(() => {
+        const error= new Error(`This is error number ${ ++errorCount }`);
+        error.timestamp = Date.now();
+        return error;
+    });
+
+    errorWithTimestamp.subscribe({
+        error: err => console.log(err.timestamp, err.message)
+    });
+
+    errorWithTimestamp.subscribe({
+        error: err => console.log(err.timestamp, err.message)
+    });
+}   
+
+// export async function exampleAjax(){
+//     const obs$ = ajax('http://localhost:5026/api/v1/Product/all').pipe(
+//         map(response => console.log('products: ', response)),
+//         catchError(error => {
+//             console.log('error: ', error);
+//             return of(error);
+//         })
+//     );
+
+//     obs$.subscribe({
+//         next: value => console.log(value),
+//         error: err => console.log(err)
+//     });
+// }
